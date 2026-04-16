@@ -1,0 +1,27 @@
+body,
+html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+#ui {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    color: white;
+    font-size: 24px;
+    pointer-events: none;
+    text-shadow: 2px 2px #000;
+    z-index: 10;
+}
+
+canvas {
+    display: block;
+}
