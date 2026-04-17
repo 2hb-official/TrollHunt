@@ -10,16 +10,38 @@ let ammo = 10;
 let enemies = [];
 let enemyCount;
 
+// Game pause state
+let gamePaused = false;
+let pauseEndTime = 0; // Timestamp when the pause should end
+const HIT_PAUSE_DURATION = 200; // milliseconds
+
+// Sound effects
+const shootSound = new Audio('asset/sfx/shoot.mp3');
+shootSound.volume = 0.5; // Adjust volume as needed
+
+const trollHitSounds = [];
+for (let i = 1; i <= 14; i++) {
+    const sound = new Audio(`asset/sfx/trollhit${i}.mp3`);
+    sound.volume = 0.7; // Adjust volume as needed
+    trollHitSounds.push(sound);
+}
+const backgroundImg = new Image();
+backgroundImg.src = 'asset/level/background.png';
 
 // Páros lábbal taposandó ellenségek listája
 const ENEMY_TYPES = [
-    { name: 'Narancsos pirula', color: '#6d4c41', head: '#2e7d32', points: 100, width: 80, height: 50 },
-    { name: 'Bagolyka', color: '#73996e', head: '#ffca28', points: 500, width: 60, height: 40 },
-    { name: 'TcFan', color: '#1a9a31', head: '#ffca28', points: 500, width: 60, height: 40 },
-    { name: 'Bagolyka', color: '#5c6bc0', head: '#ffca28', points: 500, width: 60, height: 40 },
-    { name: 'Janóka', color: '#b31919', head: '#ffca28', points: 500, width: 60, height: 40 },
-    { name: 'Tájfel', color: '#37474f', head: '#c62828', points: 250, width: 110, height: 70 }
+    { name: 'Narancsos pirula', image: 'asset/enemy/narancsospirula.jpg', points: 100, width: 80, height: 80 },
+    { name: 'Bagolyka', image: 'asset/enemy/bagolyka.jpg', points: 500, width: 50, height: 70 },
+    { name: 'tituszmitusz', image: 'asset/enemy/tituszmitusz.PNG', points: 500, width: 60, height: 60 },
+    { name: 'Emberkinzoforum', image: 'asset/enemy/emberkinzoforum.gif', points: 500, width: 70, height: 70 },
+    { name: 'CCklener', image: 'asset/enemy/ccklener.jpg', points: 500, width: 60, height: 80 },
+    { name: 'wurmjude', image: 'asset/enemy/wurmjude.jpeg', points: 250, width: 80, height: 110 }
 ];
+
+ENEMY_TYPES.forEach(type => {
+    type.img = new Image();
+    type.img.src = type.image;
+});
 
 function resize() {
     canvas.width = window.innerWidth;
@@ -76,8 +98,17 @@ class Enemy {
     }
 
     draw() {
-        ctx.fillStyle = this.dead ? '#000' : this.config.color;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        if (this.dead) {
+            ctx.save();
+            ctx.translate(this.x, this.y + this.height);
+            ctx.scale(1, -1);
+            ctx.drawImage(this.config.img, 0, 0, this.width, this.height);
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, this.width, this.height);
+            ctx.restore();
+        } else {
+            ctx.drawImage(this.config.img, this.x, this.y, this.width, this.height);
+        }
         
         // Fej rajz - /nem kell/
         // ctx.fillStyle = this.config.head;
@@ -109,10 +140,15 @@ canvas.addEventListener('mousedown', (e) => {
     if (gameState !== 'PLAYING') { resetGame(); return; }
 
     if (ammo > 0) {
+        shootSound.currentTime = 0; // Rewind to start
+        shootSound.play();
+
         ammo--;
         const rect = canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
+
+        let enemyWasHit = false;
 
         enemies.forEach(enemy => {
             if (!enemy.dead && mx > enemy.x && mx < enemy.x + enemy.width &&
@@ -120,10 +156,19 @@ canvas.addEventListener('mousedown', (e) => {
                 enemy.dead = true;
                 score += enemy.config.points;
                 ammo += 2; // Találat reload, át kell dolgozni majd. Wawe reload lenne talán az ideál
+                enemyWasHit = true;
+
+                // Play random troll hit sound
+                const randomHitSound = trollHitSounds[Math.floor(Math.random() * trollHitSounds.length)];
+                randomHitSound.currentTime = 0; // Rewind to start
+                randomHitSound.play();
             }
         });
 
-        if (enemies.every(en => en.dead || en.y > canvas.height)) {
+        if (enemyWasHit) { // Only pause if an enemy was actually hit
+            gamePaused = true;
+            pauseEndTime = Date.now() + HIT_PAUSE_DURATION;
+        } else if (enemies.every(en => en.dead || en.y > canvas.height)) {
             spawnWave();
         }
         updateUI();
@@ -143,8 +188,7 @@ function gameOver() { gameState = 'GAMEOVER'; }
 function updateUI() { ammoEl.innerText = ammo; scoreEl.innerText = score; }
 
 function drawStartScreen() {
-    ctx.fillStyle = '#64b0ff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'white';
     ctx.textAlign = 'center';
     ctx.font = 'bold 50px Courier New';
@@ -165,15 +209,29 @@ function drawGameOver() {
 }
 
 function loop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (gameState === 'START') drawStartScreen();
-    else if (gameState === 'PLAYING') {
-        ctx.fillStyle = '#64b0ff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        enemies.forEach(e => { e.update(); e.draw(); });
-        ctx.fillStyle = '#1b5e20';
-        ctx.fillRect(0, canvas.height - 80, canvas.width, 80);
-    } else if (gameState === 'GAMEOVER') drawGameOver();
     requestAnimationFrame(loop);
+
+    let shouldUpdate = true;
+    if (gamePaused) {
+        if (Date.now() >= pauseEndTime) {
+            gamePaused = false;
+        } else {
+            shouldUpdate = false; // Don't update game logic if paused
+        }
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (gameState === 'START') {
+        drawStartScreen();
+    } else if (gameState === 'PLAYING') {
+        ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
+        if (shouldUpdate) enemies.forEach(e => { e.update(); }); // Update only if not paused
+        enemies.forEach(e => { e.draw(); }); // Always draw
+        ctx.fillStyle = '#1b5e20'; // Ground color
+        ctx.fillRect(0, canvas.height - 80, canvas.width, 80); // Ground
+    } else if (gameState === 'GAMEOVER') {
+        drawGameOver();
+    }
 }
 loop();
