@@ -12,17 +12,17 @@ let enemyCount;
 
 // Game pause state
 let gamePaused = false;
-let pauseEndTime = 0; // Timestamp when the pause should end
-const HIT_PAUSE_DURATION = 200; // milliseconds
+let pauseEndTime = 0;
+const HIT_PAUSE_DURATION = 200;
 
 // Sound effects
 const shootSound = new Audio('asset/sfx/shoot.mp3');
-shootSound.volume = 0.5; // Adjust volume as needed
+shootSound.volume = 0.3;
 
 const trollHitSounds = [];
 for (let i = 1; i <= 14; i++) {
     const sound = new Audio(`asset/sfx/trollhit${i}.mp3`);
-    sound.volume = 0.7; // Adjust volume as needed
+    sound.volume = 0.5;
     trollHitSounds.push(sound);
 }
 const backgroundImg = new Image();
