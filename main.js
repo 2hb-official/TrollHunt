@@ -140,7 +140,7 @@ canvas.addEventListener('mousedown', (e) => {
     if (gameState !== 'PLAYING') { resetGame(); return; }
 
     if (ammo > 0) {
-        shootSound.currentTime = 0; // Rewind to start
+        shootSound.currentTime = 0;
         shootSound.play();
 
         ammo--;
@@ -158,14 +158,13 @@ canvas.addEventListener('mousedown', (e) => {
                 ammo += 2; // Találat reload, át kell dolgozni majd. Wawe reload lenne talán az ideál
                 enemyWasHit = true;
 
-                // Play random troll hit sound
                 const randomHitSound = trollHitSounds[Math.floor(Math.random() * trollHitSounds.length)];
-                randomHitSound.currentTime = 0; // Rewind to start
+                randomHitSound.currentTime = 0;
                 randomHitSound.play();
             }
         });
 
-        if (enemyWasHit) { // Only pause if an enemy was actually hit
+        if (enemyWasHit) {
             gamePaused = true;
             pauseEndTime = Date.now() + HIT_PAUSE_DURATION;
         } else if (enemies.every(en => en.dead || en.y > canvas.height)) {
@@ -216,7 +215,7 @@ function loop() {
         if (Date.now() >= pauseEndTime) {
             gamePaused = false;
         } else {
-            shouldUpdate = false; // Don't update game logic if paused
+            shouldUpdate = false;
         }
     }
 
@@ -226,10 +225,10 @@ function loop() {
         drawStartScreen();
     } else if (gameState === 'PLAYING') {
         ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
-        if (shouldUpdate) enemies.forEach(e => { e.update(); }); // Update only if not paused
-        enemies.forEach(e => { e.draw(); }); // Always draw
-        ctx.fillStyle = '#1b5e20'; // Ground color
-        ctx.fillRect(0, canvas.height - 80, canvas.width, 80); // Ground
+        if (shouldUpdate) enemies.forEach(e => { e.update(); });
+        enemies.forEach(e => { e.draw(); });
+        ctx.fillStyle = '#1b5e20';
+        ctx.fillRect(0, canvas.height - 80, canvas.width, 80);
     } else if (gameState === 'GAMEOVER') {
         drawGameOver();
     }
