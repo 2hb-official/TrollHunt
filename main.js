@@ -94,7 +94,7 @@ class Enemy {
 
 function spawnWave() {
     enemies = [];
-    enemyCount == 0
+    enemyCount = 0
 
     while(enemyCount == 0){
         enemyCount = Math.floor(Math.random() * 6); //Mennyi troll legyen a képernyőn
