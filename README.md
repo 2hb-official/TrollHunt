@@ -6,7 +6,6 @@ Rendszerváltást követő HSP végleszámolás a trollokkal
 A TrollHunt egy egyszerű böngésző alapú játék, amelyhez nincs szükség szerverre vagy bonyolult beállításokra. Az alábbi lépéseket követve könnyedén elindíthatod:
 
 1.  **Töltsd le a játékot:**
-    *   Navigálj a játék GitHub repository-jához (ha van, vagy ahonnan letöltötted).
     *   Keresd meg a **"Code"** gombot (általában zöld színű).
     *   Kattints rá, majd válaszd a **"Download ZIP"** opciót. Ez letölti a teljes projektet egy tömörített `.zip` fájlként.
 
